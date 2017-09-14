@@ -8,8 +8,6 @@ getEmitter.isStar = true;
 module.exports = getEmitter;
 
 
-var timetable = {};
-
 /**
  * Возвращает новый emitter
  * @returns {Object}
@@ -26,21 +24,16 @@ function getEmitter() {
          * @param {Function} handler
          * @returns {on}
          */
-        tt: {},
+        timetable: {},
 
         on: function (event, context, handler) {
-            var key = Object.keys(timetable);
-            var key2 = Object.keys(this.tt);
+            var key = Object.keys(this.timetable);
             var ev = {};
             ev.event = event;
             ev.context = context;
             ev.handler = handler;
             ev.emitNum = 0;
-            timetable[key.length] = ev;
-            this.tt[key2.length] = ev;
-            console.info('-------');
-            console.info(this.tt);
-            console.info('-------');
+            this.timetable[key.length] = ev;
 
             return this;
         },
@@ -52,9 +45,12 @@ function getEmitter() {
          * @returns {on}
          */
         off: function (event, context) {
-            for (var key in timetable) {
-                if (timetable[key].event === event && timetable[key].context === context) {
-                    delete timetable[key];
+            var e = event;
+            var c = context;
+
+            for (var key in this.timetable) {
+                if (this.timetable[key].event === e && this.timetable[key].context === c) {
+                    delete this.timetable[key];
 
                 }
             }
@@ -70,7 +66,7 @@ function getEmitter() {
         emit: function (event) {
             var eArr = eventArray(event);
             for (var j = 0; j <= eArr.length; j++) {
-                emitEvent(eArr[j]);
+                emitEvent(eArr[j], this.timetable);
             }
 
             return this;
@@ -86,8 +82,7 @@ function getEmitter() {
          * @returns {on}
          */
         several: function (event, context, handler, times) {
-            var key = Object.keys(timetable);
-            var key2 = Object.keys(this.tt);
+            var key = Object.keys(this.timetable);
             var ev = {};
             ev.event = event;
             ev.context = context;
@@ -96,12 +91,7 @@ function getEmitter() {
                 ev.times = times;
                 ev.emitNum = 0;
             }
-
-            this.tt[key2.length] = ev;
-            console.info('-------');
-            console.info(this.tt);
-            console.info('-------');
-            timetable[key.length] = ev;
+            this.timetable[key.length] = ev;
 
             return this;
         },
@@ -116,8 +106,7 @@ function getEmitter() {
          * @returns {on}
          */
         through: function (event, context, handler, frequency) {
-            var key = Object.keys(timetable);
-            var key2 = Object.keys(this.tt);
+            var key = Object.keys(this.timetable);
             var ev = {};
             ev.event = event;
             ev.context = context;
@@ -126,11 +115,7 @@ function getEmitter() {
                 ev.frequency = frequency;
                 ev.emitNum = 0;
             }
-            timetable[key.length] = ev;
-            this.tt[key2.length] = ev;
-            console.info('-------');
-            console.info(this.tt);
-            console.info('-------');
+            this.timetable[key.length] = ev;
 
             return this;
         }
@@ -152,18 +137,18 @@ function eventArray(event) {
 }
 
 
-function emitEvent(event) {
+function emitEvent(event, timetable) {
     for (var key in timetable) {
         if (timetable[key].event === event) {
             timetable[key].emitNum++;
             var cS = checkSeveral(timetable[key].emitNum, timetable[key].times);
             var cT = checkThrough(timetable[key].emitNum, timetable[key].frequency);
-            emitEventDo(cS, cT, key);
+            emitEventDo(cS, cT, key, timetable);
 
         }
     }
 }
-function emitEventDo(cS, cT, key) {
+function emitEventDo(cS, cT, key, timetable) {
     if (cS && cT) {
         timetable[key].handler.call(timetable[key].context);
     }
